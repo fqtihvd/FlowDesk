@@ -1,0 +1,48 @@
+# ------------------------------------------------------------------
+# Personal data — never commit
+# ------------------------------------------------------------------
+# In development (npm start) the app keeps its data next to main.js;
+# a packaged install keeps it in %APPDATA%\FlowDesk+\data instead.
+data/
+backups/
+config.json
+settings.json
+license.json
+notified.json
+data.json
+email-errors.log
+crash.log
+
+# User backups exported from the app (plain or encrypted)
+*.flow
+FlowDesk-backup-*.json
+
+# Secrets / local environment
+.env
+.env.*
+
+# ------------------------------------------------------------------
+# Dependencies & build output
+# ------------------------------------------------------------------
+node_modules/
+dist/
+out/
+*.blockmap
+builder-debug.yml
+builder-effective-config.yaml
+
+# Binaries — only the released installer is tracked
+*.exe
+!release/FlowDesk_Setup.exe
+
+# ------------------------------------------------------------------
+# Logs, OS & editor files
+# ------------------------------------------------------------------
+*.log
+npm-debug.log*
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+*.swp

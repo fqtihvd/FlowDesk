@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://api.gumroad.com">
+<title>FlowDesk+</title>
+<script src="theme-boot.js"></script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ================= LOGIN / SETUP ================= -->
+<div id="screen-auth" class="screen screen-auth">
+  <div class="auth-card">
+    <div class="auth-logo"><img src="assets/app-icon.png" alt="FlowDesk+" /></div>
+    <h1 class="auth-brand">FlowDesk+</h1>
+    <p id="auth-subtitle" class="muted" data-i18n="auth.loginSubtitle"></p>
+
+    <form id="auth-form" autocomplete="off">
+      <input id="auth-password" type="password" autocomplete="new-password" data-i18n-placeholder="auth.passwordPlaceholder" />
+      <input id="auth-password-confirm" type="password" autocomplete="new-password" class="hidden" data-i18n-placeholder="auth.passwordConfirmPlaceholder" />
+      <button type="submit" class="btn btn-primary btn-block" id="auth-submit" data-i18n="auth.loginSubmit"></button>
+    </form>
+    <p id="auth-error" class="error hidden"></p>
+    <div class="brand-signature"><img class="brand-logo" src="assets/logo-mark.png" alt="Devilt Interactive" width="22" height="22" /><span>by Devilt Interactive</span></div>
+  </div>
+</div>
+
+<!-- ================= LICENSE LOCK ================= -->
+<div id="screen-license" class="screen screen-auth hidden">
+  <div class="auth-card">
+    <div class="auth-logo">🔑</div>
+    <h1 class="auth-brand">FlowDesk+</h1>
+    <p class="muted" data-i18n="licenseLock.subtitle"></p>
+
+    <input id="license-key-input" type="text" data-i18n-placeholder="licenseLock.keyPlaceholder" />
+    <button type="button" class="btn btn-primary btn-block" id="license-activate-btn" data-i18n="licenseLock.activateButton"></button>
+    <button type="button" class="btn btn-secondary btn-block" id="license-purchase-btn" data-i18n="licenseLock.purchaseButton"></button>
+    <p id="license-error" class="error hidden"></p>
+    <div class="brand-signature"><img class="brand-logo" src="assets/logo-mark.png" alt="Devilt Interactive" width="22" height="22" /><span>by Devilt Interactive</span></div>
+  </div>
+</div>
+
+<!-- ================= HOME ================= -->
+<div id="screen-home" class="screen hidden">
+  <header class="topbar">
+    <nav class="main-tabs">
+      <button type="button" class="main-tab active" data-tab="home" data-i18n="nav.themes"></button>
+      <button type="button" class="main-tab" data-tab="notebook" data-i18n="nav.notebook"></button>
+    </nav>
+    <div class="topbar-search"><label class="cmdk-trigger"><span class="cmdk-trigger-icon">🔍</span><input type="text" class="cmdk-inline" autocomplete="off" spellcheck="false" data-i18n-placeholder="search.trigger" /><kbd>Ctrl K</kbd></label></div>
+    <div class="topbar-actions">
+      <a href="#" class="trial-banner hidden" id="trial-banner"></a>
+      <div class="theme-switch"></div>
+      <button class="btn btn-secondary" id="btn-settings" data-i18n="home.settingsButton"></button>
+      <button class="btn btn-secondary" id="btn-change-password" data-i18n="home.changePassword"></button>
+      <button class="btn btn-primary" id="btn-new-theme" data-i18n="home.newTheme"></button>
+    </div>
+  </header>
+
+  <section class="dashboard" id="expense-overview">
+    <div class="expense-toolbar">
+      <select id="home-time-filter" class="time-filter-select"></select>
+      <div class="export-buttons">
+        <button class="btn btn-secondary" id="btn-home-categories" data-i18n="theme.manageCategories"></button>
+        <button class="btn btn-secondary" id="btn-export-csv" data-i18n="exportModal.csvButton"></button>
+        <button class="btn btn-secondary" id="btn-export-pdf" data-i18n="exportModal.pdfButton"></button>
+      </div>
+    </div>
+
+    <div class="bento">
+      <div class="bento-tile tile-hero">
+        <span class="tile-label" data-i18n="home.totalExpense"></span>
+        <span class="tile-value tile-value-xl" id="stat-total">0</span>
+        <span class="tile-sub" id="stat-total-sub"></span>
+      </div>
+      <div class="bento-tile tile-stat">
+        <span class="tile-icon">📅</span>
+        <span class="tile-label" data-i18n="home.monthlyExpense"></span>
+        <span class="tile-value" id="stat-monthly">0</span>
+      </div>
+      <div class="bento-tile tile-stat">
+        <span class="tile-icon">🗓️</span>
+        <span class="tile-label" data-i18n="home.weeklyExpense"></span>
+        <span class="tile-value" id="stat-weekly">0</span>
+      </div>
+
+      <div class="bento-tile tile-donut">
+        <h2 class="tile-title" data-i18n="home.donutTitle"></h2>
+        <div class="donut-wrap" id="donut-wrap">
+          <div class="donut-svg-box">
+            <svg id="donut-svg" viewBox="0 0 200 200"></svg>
+            <div class="donut-center">
+              <span class="donut-center-label" data-i18n="home.donutCenterLabel"></span>
+              <span class="donut-center-value" id="donut-center-value">0</span>
+            </div>
+          </div>
+          <ul class="donut-legend" id="donut-legend"></ul>
+        </div>
+        <p class="tile-empty hidden" id="donut-empty" data-i18n="home.noPaymentsYet"></p>
+      </div>
+
+      <div class="bento-tile tile-upcoming">
+        <div class="tile-head">
+          <h2 class="tile-title" data-i18n="home.upcomingPayments"></h2>
+          <span class="tile-head-meta" id="upcoming-summary"></span>
+        </div>
+        <ul class="tile-rows upcoming-rows" id="tile-upcoming"></ul>
+      </div>
+
+      <div class="bento-tile tile-list">
+        <h2 class="tile-title" data-i18n="home.upcomingReminders"></h2>
+        <ul class="tile-rows" id="tile-reminders"></ul>
+      </div>
+      <button type="button" class="bento-tile tile-stat tile-link" id="tile-notebook">
+        <span class="tile-icon">📓</span>
+        <span class="tile-label" data-i18n="nav.notebookPlain"></span>
+        <span class="tile-value" id="stat-notes">0</span>
+        <span class="tile-sub" id="stat-notes-sub"></span>
+      </button>
+      <div class="bento-tile tile-stat">
+        <span class="tile-icon">🔁</span>
+        <span class="tile-label" data-i18n="home.activeSubscriptions"></span>
+        <span class="tile-value" id="stat-subs">0</span>
+        <span class="tile-sub" id="stat-subs-sub"></span>
+      </div>
+    </div>
+
+    <h2 class="section-heading" data-i18n="home.themesHeading"></h2>
+  </section>
+
+  <main class="theme-grid" id="theme-grid"></main>
+  <p class="empty-hint hidden" id="home-empty-hint" data-i18n="home.emptyHint"></p>
+  <footer class="brand-footer"><div class="brand-signature"><img class="brand-logo" src="assets/logo-mark.png" alt="Devilt Interactive" width="22" height="22" /><span>by Devilt Interactive</span></div></footer>
+</div>
+
+<!-- ================= THEME DETAIL ================= -->
+<div id="screen-theme" class="screen hidden">
+  <header class="topbar">
+    <button class="btn btn-secondary" id="btn-back-home" data-i18n="theme.backHome"></button>
+    <h1 id="theme-title" class="editable-title" data-i18n-title="theme.renameTitleTooltip"></h1>
+    <div class="topbar-search"><label class="cmdk-trigger"><span class="cmdk-trigger-icon">🔍</span><input type="text" class="cmdk-inline" autocomplete="off" spellcheck="false" data-i18n-placeholder="search.trigger" /><kbd>Ctrl K</kbd></label></div>
+    <div class="topbar-actions">
+      <button class="btn btn-secondary hidden" id="btn-manage-categories" data-i18n="theme.manageCategories"></button>
+      <button class="btn btn-danger" id="btn-delete-theme" data-i18n="theme.deleteTheme"></button>
+    </div>
+  </header>
+
+  <!-- Payments time filter -->
+  <div id="theme-toolbar" class="expense-toolbar hidden">
+    <select id="theme-time-filter" class="time-filter-select"></select>
+  </div>
+
+  <!-- Payments summary -->
+  <div id="payments-summary" class="summary-bar hidden">
+    <div class="summary-box">
+      <span class="summary-label" data-i18n="theme.summaryTotal"></span>
+      <span class="summary-value" id="sum-total">0</span>
+    </div>
+    <div class="summary-box paid">
+      <span class="summary-label" data-i18n="theme.summaryPaid"></span>
+      <span class="summary-value" id="sum-paid">0</span>
+    </div>
+    <div class="summary-box unpaid">
+      <span class="summary-label" data-i18n="theme.summaryUnpaid"></span>
+      <span class="summary-value" id="sum-unpaid">0</span>
+    </div>
+  </div>
+
+  <div class="add-item-bar">
+    <button class="btn btn-primary" id="btn-add-item"></button>
+  </div>
+
+  <main class="item-list" id="item-list"></main>
+  <p class="empty-hint hidden" id="theme-empty-hint" data-i18n="theme.emptyHint"></p>
+</div>
+
+<!-- ================= MODAL: new/edit theme ================= -->
+<div id="modal-theme" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="modal-theme-title"></h2>
+    <label class="field-label" data-i18n="themeModal.nameLabel"></label>
+    <input id="modal-theme-name" type="text" data-i18n-placeholder="themeModal.namePlaceholder" />
+
+    <div id="modal-theme-type-wrap">
+      <label class="field-label" data-i18n="themeModal.typeLabel"></label>
+      <div class="type-choice">
+        <label class="type-option">
+          <input type="radio" name="theme-type" value="notes" checked />
+          <span data-i18n="themeModal.typeNotes"></span>
+        </label>
+        <label class="type-option">
+          <input type="radio" name="theme-type" value="payments" />
+          <span data-i18n="themeModal.typePayments"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-theme-cancel" data-i18n="common.cancel"></button>
+      <button class="btn btn-primary" id="modal-theme-save" data-i18n="common.save"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= NOTEBOOK: list (standalone Notepad module) ================= -->
+<div id="screen-notebook" class="screen hidden">
+  <header class="topbar">
+    <nav class="main-tabs">
+      <button type="button" class="main-tab" data-tab="home" data-i18n="nav.themes"></button>
+      <button type="button" class="main-tab active" data-tab="notebook" data-i18n="nav.notebook"></button>
+    </nav>
+    <div class="topbar-search"><label class="cmdk-trigger"><span class="cmdk-trigger-icon">🔍</span><input type="text" class="cmdk-inline" autocomplete="off" spellcheck="false" data-i18n-placeholder="search.trigger" /><kbd>Ctrl K</kbd></label></div>
+    <div class="topbar-actions">
+      <div class="theme-switch"></div>
+      <button class="btn btn-primary" id="btn-new-pad" data-i18n="notebook.newNote"></button>
+    </div>
+  </header>
+
+  <div class="notebook-toolbar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input id="notebook-search" type="search" autocomplete="off" data-i18n-placeholder="notebook.searchPlaceholder" />
+    </div>
+    <span id="notebook-count" class="muted"></span>
+  </div>
+
+  <main class="notebook-list-wrap">
+    <table class="notebook-table">
+      <colgroup>
+        <col class="col-title" /><col class="col-date" /><col class="col-date" /><col class="col-actions" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th data-sort="title"><span data-i18n="notebook.colTitle"></span><span class="sort-arrow"></span></th>
+          <th data-sort="createdAt"><span data-i18n="notebook.colCreated"></span><span class="sort-arrow"></span></th>
+          <th data-sort="updatedAt"><span data-i18n="notebook.colModified"></span><span class="sort-arrow"></span></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="notebook-tbody"></tbody>
+    </table>
+    <p class="empty-hint hidden" id="notebook-empty"></p>
+  </main>
+  <footer class="brand-footer"><div class="brand-signature"><img class="brand-logo" src="assets/logo-mark.png" alt="Devilt Interactive" width="22" height="22" /><span>by Devilt Interactive</span></div></footer>
+</div>
+
+<!-- ================= NOTEBOOK: full-screen editor ================= -->
+<div id="screen-notepad" class="screen screen-notepad hidden">
+  <header class="topbar notepad-topbar">
+    <button class="btn btn-secondary" id="pad-back" data-i18n="notebook.back"></button>
+    <input id="pad-title" class="notepad-title" type="text" data-i18n-placeholder="notebook.titlePlaceholder" />
+    <div class="topbar-actions">
+      <div class="export-wrap">
+        <button class="btn btn-secondary" id="pad-export" data-i18n="notebook.export"></button>
+        <div class="export-menu hidden" id="pad-export-menu">
+          <button type="button" data-format="txt" data-i18n="notebook.exportTxt"></button>
+          <button type="button" data-format="md" data-i18n="notebook.exportMd"></button>
+        </div>
+      </div>
+      <button class="btn btn-danger hidden" id="pad-delete" data-i18n="confirmModal.deleteButton"></button>
+      <button class="btn btn-primary" id="pad-save" data-i18n="common.save"></button>
+    </div>
+  </header>
+
+  <main class="notepad-body">
+    <textarea id="pad-content" class="notepad-textarea" wrap="soft" spellcheck="true" data-i18n-placeholder="notebook.contentPlaceholder"></textarea>
+  </main>
+
+  <footer class="notepad-status">
+    <span id="pad-counter"></span>
+    <span id="pad-stamps" class="muted"></span>
+    <span id="pad-save-state" class="muted"></span>
+  </footer>
+</div>
+
+<!-- ================= MODAL: new/edit reminder (compact) ================= -->
+<div id="modal-note" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="modal-note-title"></h2>
+    <label class="field-label" data-i18n="noteModal.titleLabel"></label>
+    <input id="note-title" type="text" data-i18n-placeholder="noteModal.titlePlaceholder" />
+    <label class="field-label" data-i18n="noteModal.descLabel"></label>
+    <textarea id="note-desc" rows="3" data-i18n-placeholder="noteModal.descPlaceholder"></textarea>
+    <div class="field-label-row">
+      <label class="field-label" for="note-remind" data-i18n="noteModal.reminderLabel"></label>
+      <button type="button" class="link-btn" id="note-remind-clear" data-i18n="noteModal.reminderClear"></button>
+    </div>
+    <input id="note-remind" type="datetime-local" />
+    <p class="muted reminder-hint" data-i18n="noteModal.reminderHint"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-note-cancel" data-i18n="common.cancel"></button>
+      <button class="btn btn-primary" id="modal-note-save" data-i18n="common.save"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: new/edit payment item ================= -->
+<div id="modal-payment" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="modal-payment-title"></h2>
+    <label class="field-label" data-i18n="paymentModal.nameLabel"></label>
+    <input id="pay-name" type="text" data-i18n-placeholder="paymentModal.namePlaceholder" />
+
+    <div class="field-row">
+      <div>
+        <label class="field-label" id="pay-amount-label"></label>
+        <input id="pay-amount" type="number" min="0" step="0.01" placeholder="0" />
+      </div>
+      <div>
+        <label class="field-label" data-i18n="paymentModal.methodLabel"></label>
+        <input id="pay-method" type="text" data-i18n-placeholder="paymentModal.methodPlaceholder" list="pay-method-list" />
+        <datalist id="pay-method-list">
+          <option id="pay-method-opt-card"></option>
+          <option id="pay-method-opt-transfer"></option>
+          <option id="pay-method-opt-cash"></option>
+          <option id="pay-method-opt-autopay"></option>
+        </datalist>
+      </div>
+    </div>
+
+    <div class="field-label-row">
+      <label class="field-label" for="pay-category" data-i18n="paymentModal.categoryLabel"></label>
+      <button type="button" class="link-btn" id="pay-manage-categories" data-i18n="paymentModal.manageCategories"></button>
+    </div>
+    <select id="pay-category">
+      <option value="" data-i18n="paymentModal.categoryNone"></option>
+    </select>
+
+    <label class="field-label" data-i18n="paymentModal.periodLabel"></label>
+    <div class="type-choice">
+      <label class="type-option">
+        <input type="radio" name="pay-period" value="monthly" checked />
+        <span data-i18n="paymentModal.periodMonthly"></span>
+      </label>
+      <label class="type-option">
+        <input type="radio" name="pay-period" value="weekly" />
+        <span data-i18n="paymentModal.periodWeekly"></span>
+      </label>
+      <label class="type-option">
+        <input type="radio" name="pay-period" value="yearly" />
+        <span data-i18n="paymentModal.periodYearly"></span>
+      </label>
+      <label class="type-option">
+        <input type="radio" name="pay-period" value="custom" />
+        <span data-i18n="paymentModal.periodCustom"></span>
+      </label>
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label class="field-label" data-i18n="paymentModal.startDateLabel"></label>
+        <input id="pay-start" type="date" />
+      </div>
+      <div>
+        <label class="field-label" data-i18n="paymentModal.endDateLabel"></label>
+        <input id="pay-end" type="date" />
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-payment-cancel" data-i18n="common.cancel"></button>
+      <button class="btn btn-primary" id="modal-payment-save" data-i18n="common.save"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: manage payment categories ================= -->
+<div id="modal-categories" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 data-i18n="categoryModal.title"></h2>
+    <p class="muted modal-hint" data-i18n="categoryModal.hint"></p>
+
+    <div class="category-add-row">
+      <input id="new-category-name" type="text" data-i18n-placeholder="categoryModal.namePlaceholder" />
+      <button class="btn btn-primary" id="btn-add-category" data-i18n="categoryModal.add"></button>
+    </div>
+
+    <ul class="category-list" id="category-list"></ul>
+    <p class="muted category-empty-hint hidden" id="category-empty-hint" data-i18n="categoryModal.emptyHint"></p>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-categories-close" data-i18n="categoryModal.close"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: confirm ================= -->
+<div id="modal-confirm" class="modal-overlay hidden">
+  <div class="modal modal-small">
+    <p id="confirm-text"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="confirm-cancel" data-i18n="common.cancel"></button>
+      <button class="btn btn-danger" id="confirm-ok" data-i18n="confirmModal.deleteButton"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: change password ================= -->
+<div id="modal-password" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 data-i18n="passwordModal.title"></h2>
+    <label class="field-label" data-i18n="passwordModal.currentLabel"></label>
+    <input id="pwd-current" type="password" />
+    <label class="field-label" data-i18n="passwordModal.newLabel"></label>
+    <input id="pwd-new" type="password" />
+    <label class="field-label" data-i18n="passwordModal.newConfirmLabel"></label>
+    <input id="pwd-new-confirm" type="password" />
+    <p id="pwd-error" class="error hidden"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-password-cancel" data-i18n="common.cancel"></button>
+      <button class="btn btn-primary" id="modal-password-save" data-i18n="common.save"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: settings ================= -->
+<div id="modal-settings" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 data-i18n="settingsModal.title"></h2>
+    <label class="field-label" data-i18n="settingsModal.languageLabel"></label>
+    <select id="settings-language"></select>
+    <label class="field-label" data-i18n="settingsModal.currencyLabel"></label>
+    <select id="settings-currency"></select>
+
+    <label class="type-option checkbox-option" id="settings-tray-wrap">
+      <input type="checkbox" id="settings-tray" />
+      <span data-i18n="settingsModal.trayLabel"></span>
+    </label>
+    <label class="type-option checkbox-option" id="settings-startup-wrap">
+      <input type="checkbox" id="settings-startup" />
+      <span data-i18n="settingsModal.startupLabel"></span>
+    </label>
+
+    <div class="settings-theme-block">
+      <label class="field-label" data-i18n="settingsModal.themeLabel"></label>
+      <div class="theme-cards" id="settings-theme-cards"></div>
+    </div>
+
+    <div class="settings-backup-block">
+      <label class="field-label" data-i18n="backup.title"></label>
+      <p class="muted modal-hint" data-i18n="backup.hint"></p>
+      <div class="backup-actions">
+        <button type="button" class="btn btn-secondary" id="btn-backup-export" data-i18n="backup.exportButton"></button>
+        <button type="button" class="btn btn-secondary" id="btn-backup-import" data-i18n="backup.importButton"></button>
+      </div>
+      <p id="backup-msg" class="hidden"></p>
+    </div>
+
+    <div class="settings-license-block">
+      <label class="field-label" data-i18n="settingsModal.licenseTitle"></label>
+      <p id="settings-license-status" class="license-status"></p>
+      <div class="category-add-row">
+        <input id="settings-license-key" type="text" data-i18n-placeholder="settingsModal.licenseKeyPlaceholder" />
+        <button class="btn btn-primary" id="settings-license-activate" data-i18n="settingsModal.licenseActivate"></button>
+      </div>
+      <p id="settings-license-msg" class="hidden"></p>
+      <button type="button" class="link-btn" id="settings-purchase-link" data-i18n="settingsModal.purchaseLink"></button>
+    </div>
+
+    <div class="brand-signature settings-signature"><img class="brand-logo" src="assets/logo-mark.png" alt="Devilt Interactive" width="22" height="22" /><span>by Devilt Interactive</span></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-settings-close" data-i18n="common.close"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: export backup (format + password) ================= -->
+<div id="modal-backup-export" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 data-i18n="backup.exportTitle"></h2>
+    <div class="restore-modes">
+      <label class="type-option restore-mode">
+        <input type="radio" name="backup-format" value="flow" checked />
+        <span><b data-i18n="backup.formatFlow"></b><small data-i18n="backup.formatFlowHint"></small></span>
+      </label>
+      <label class="type-option restore-mode">
+        <input type="radio" name="backup-format" value="json" />
+        <span><b data-i18n="backup.formatJson"></b><small data-i18n="backup.formatJsonHint"></small></span>
+      </label>
+    </div>
+    <div id="backup-password-fields">
+      <label class="field-label" for="backup-password" data-i18n="backup.passwordLabel"></label>
+      <input id="backup-password" type="password" autocomplete="new-password" />
+      <label class="field-label" for="backup-password-confirm" data-i18n="backup.passwordConfirmLabel"></label>
+      <input id="backup-password-confirm" type="password" autocomplete="new-password" />
+      <p class="muted restore-note" data-i18n="backup.passwordHint"></p>
+    </div>
+    <p id="backup-export-error" class="error hidden"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="backup-export-cancel" data-i18n="common.cancel"></button>
+      <button class="btn btn-primary" id="backup-export-confirm" data-i18n="backup.exportConfirm"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: password for an encrypted backup ================= -->
+<div id="modal-backup-password" class="modal-overlay hidden">
+  <div class="modal modal-small">
+    <h2 data-i18n="backup.unlockTitle"></h2>
+    <p class="muted modal-hint" id="backup-unlock-file"></p>
+    <input id="backup-unlock-password" type="password" autocomplete="off" data-i18n-placeholder="backup.passwordLabel" />
+    <p id="backup-unlock-error" class="error hidden"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="backup-unlock-cancel" data-i18n="common.cancel"></button>
+      <button class="btn btn-primary" id="backup-unlock-confirm" data-i18n="backup.unlockButton"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: confirm restore from backup ================= -->
+<div id="modal-restore" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 data-i18n="backup.restoreTitle"></h2>
+    <p class="muted modal-hint" id="restore-file"></p>
+    <table class="restore-table">
+      <thead>
+        <tr><th></th><th data-i18n="backup.colBackup"></th><th data-i18n="backup.colCurrent"></th></tr>
+      </thead>
+      <tbody id="restore-tbody"></tbody>
+    </table>
+    <p class="muted restore-note" id="restore-skipped"></p>
+    <div class="restore-modes">
+      <label class="type-option restore-mode">
+        <input type="radio" name="restore-mode" value="replace" checked />
+        <span><b data-i18n="backup.modeReplace"></b><small data-i18n="backup.modeReplaceHint"></small></span>
+      </label>
+      <label class="type-option restore-mode">
+        <input type="radio" name="restore-mode" value="merge" />
+        <span><b data-i18n="backup.modeMerge"></b><small data-i18n="backup.modeMergeHint"></small></span>
+      </label>
+    </div>
+    <p class="muted restore-note" data-i18n="backup.safetyNote"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="restore-cancel" data-i18n="common.cancel"></button>
+      <button class="btn btn-primary" id="restore-confirm" data-i18n="backup.restoreButton"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= COMMAND PALETTE: global search (Ctrl+K) ================= -->
+<div id="modal-cmdk" class="modal-overlay cmdk-overlay hidden">
+  <div class="cmdk" role="dialog" aria-modal="true">
+    <div class="cmdk-input-row">
+      <span class="cmdk-search-icon">🔍</span>
+      <input id="cmdk-input" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="search.placeholder" />
+      <kbd>Esc</kbd>
+    </div>
+    <div class="cmdk-filters" id="cmdk-filters"></div>
+    <div class="cmdk-results" id="cmdk-results"></div>
+    <div class="cmdk-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> <span data-i18n="search.hintNavigate"></span></span>
+      <span><kbd>Enter</kbd> <span data-i18n="search.hintOpen"></span></span>
+      <span><kbd>Tab</kbd> <span data-i18n="search.hintFilter"></span></span>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script><script src="app.js"></script>
+</body>
+</html>

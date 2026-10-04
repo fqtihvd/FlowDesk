@@ -1,0 +1,44 @@
+{
+  "name": "flowdesk-plus",
+  "productName": "FlowDesk+",
+  "version": "1.9.0",
+  "description": "FlowDesk+ - themed notes, reminders and payment tracking desktop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:release": "node scripts/check-release.js && electron-builder"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.devilt.flowdeskplus",
+    "productName": "FlowDesk+",
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/app-icon.ico",
+      "artifactName": "FlowDesk_Setup.${ext}"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "app.config.json",
+      "src/**/*",
+      "package.json"
+    ],
+    "nsis": {
+      "installerIcon": "src/assets/app-icon.ico",
+      "uninstallerIcon": "src/assets/app-icon.ico",
+      "installerHeaderIcon": "src/assets/app-icon.ico",
+      "shortcutName": "FlowDesk+"
+    },
+    "executableName": "FlowDesk",
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
